@@ -3,11 +3,10 @@ apply plugin: 'com.android.application'
 android {
     compileSdkVersion 23
     buildToolsVersion "23.0.1"
-
     defaultConfig {
         applicationId "cn.rongcloud.im"
         minSdkVersion 11
-        targetSdkVersion 23
+        targetSdkVersion 24
         versionCode 2017010910
         versionName "2.8.5 dev"
 

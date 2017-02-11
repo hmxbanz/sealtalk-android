@@ -105,7 +105,6 @@ public class App extends MultiDexApplication {
     public static DisplayImageOptions getOptions() {
         return options;
     }
-
     private void openSealDBIfHasCachedToken() {
         SharedPreferences sp = getSharedPreferences("config", MODE_PRIVATE);
         String cachedToken = sp.getString("loginToken", "");
@@ -117,7 +116,6 @@ public class App extends MultiDexApplication {
             }
         }
     }
-
     public static String getCurProcessName(Context context) {
         int pid = android.os.Process.myPid();
         ActivityManager activityManager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
