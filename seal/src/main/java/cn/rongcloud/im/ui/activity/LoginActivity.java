@@ -65,66 +65,10 @@ public class LoginActivity extends BaseActivity implements View.OnClickListener 
         editor = sp.edit();
         initView();
     }
-
-    private void initView() {
-        mPhoneEdit = (ClearWriteEditText) findViewById(R.id.de_login_phone);
-        mPasswordEdit = (ClearWriteEditText) findViewById(R.id.de_login_password);
-        Button mConfirm = (Button) findViewById(R.id.de_login_sign);
-        TextView mRegister = (TextView) findViewById(R.id.de_login_register);
-        TextView forgetPassword = (TextView) findViewById(R.id.de_login_forgot);
-        forgetPassword.setOnClickListener(this);
-        mConfirm.setOnClickListener(this);
-        mRegister.setOnClickListener(this);
-        mImg_Background = (ImageView) findViewById(R.id.de_img_backgroud);
-        new Handler().postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                Animation animation = AnimationUtils.loadAnimation(LoginActivity.this, R.anim.translate_anim);
-                mImg_Background.startAnimation(animation);
-            }
-        }, 200);
-        mPhoneEdit.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-
-            }
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-                if (s.length() == 11) {
-                    AMUtils.onInactive(mContext, mPhoneEdit);
-                }
-            }
-
-            @Override
-            public void afterTextChanged(Editable s) {
-
-            }
-        });
-
-        String oldPhone = sp.getString(SealConst.SEALTALK_LOGING_PHONE, "");
-        String oldPassword = sp.getString(SealConst.SEALTALK_LOGING_PASSWORD, "");
-
-        if (!TextUtils.isEmpty(oldPhone) && !TextUtils.isEmpty(oldPassword)) {
-            mPhoneEdit.setText(oldPhone);
-            mPasswordEdit.setText(oldPassword);
-        }
-
-        if (getIntent().getBooleanExtra("kickedByOtherClient", false)) {
-            final AlertDialog dlg = new AlertDialog.Builder(LoginActivity.this).create();
-            dlg.show();
-            Window window = dlg.getWindow();
-            window.setContentView(R.layout.other_devices);
-            TextView text = (TextView) window.findViewById(R.id.ok);
-            text.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    dlg.cancel();
-                }
-            });
-        }
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
     }
-
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
@@ -168,8 +112,6 @@ public class LoginActivity extends BaseActivity implements View.OnClickListener 
                 break;
         }
     }
-
-
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == 2 && data != null) {
@@ -196,7 +138,6 @@ public class LoginActivity extends BaseActivity implements View.OnClickListener 
         super.onActivityResult(requestCode, resultCode, data);
     }
 
-
     @Override
     public Object doInBackground(int requestCode, String id) throws HttpException {
         switch (requestCode) {
@@ -209,7 +150,6 @@ public class LoginActivity extends BaseActivity implements View.OnClickListener 
         }
         return null;
     }
-
     @Override
     public void onSuccess(int requestCode, Object result) {
         if (result != null) {
@@ -299,11 +239,6 @@ public class LoginActivity extends BaseActivity implements View.OnClickListener 
             }
         }
     }
-
-    private void reGetToken() {
-        request(GET_TOKEN);
-    }
-
     @Override
     public void onFailure(int requestCode, int state, Object result) {
         if (!CommonUtils.isNetworkConnected(mContext)) {
@@ -327,11 +262,67 @@ public class LoginActivity extends BaseActivity implements View.OnClickListener 
         }
     }
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-    }
+    private void initView() {
+        mPhoneEdit = (ClearWriteEditText) findViewById(R.id.de_login_phone);
+        mPasswordEdit = (ClearWriteEditText) findViewById(R.id.de_login_password);
+        Button mConfirm = (Button) findViewById(R.id.de_login_sign);
+        TextView mRegister = (TextView) findViewById(R.id.de_login_register);
+        TextView forgetPassword = (TextView) findViewById(R.id.de_login_forgot);
+        forgetPassword.setOnClickListener(this);
+        mConfirm.setOnClickListener(this);
+        mRegister.setOnClickListener(this);
+        mImg_Background = (ImageView) findViewById(R.id.de_img_backgroud);
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                Animation animation = AnimationUtils.loadAnimation(LoginActivity.this, R.anim.translate_anim);
+                mImg_Background.startAnimation(animation);
+            }
+        }, 200);
+        mPhoneEdit.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
 
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (s.length() == 11) {
+                    AMUtils.onInactive(mContext, mPhoneEdit);
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+
+            }
+        });
+
+        String oldPhone = sp.getString(SealConst.SEALTALK_LOGING_PHONE, "");
+        String oldPassword = sp.getString(SealConst.SEALTALK_LOGING_PASSWORD, "");
+
+        if (!TextUtils.isEmpty(oldPhone) && !TextUtils.isEmpty(oldPassword)) {
+            mPhoneEdit.setText(oldPhone);
+            mPasswordEdit.setText(oldPassword);
+        }
+
+        if (getIntent().getBooleanExtra("kickedByOtherClient", false)) {
+            final AlertDialog dlg = new AlertDialog.Builder(LoginActivity.this).create();
+            dlg.show();
+            Window window = dlg.getWindow();
+            window.setContentView(R.layout.other_devices);
+            TextView text = (TextView) window.findViewById(R.id.ok);
+            text.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    dlg.cancel();
+                }
+            });
+        }
+    }
+    private void reGetToken() {
+        request(GET_TOKEN);
+    }
     private void goToMain() {
         editor.putString("loginToken", loginToken);
         editor.putString(SealConst.SEALTALK_LOGING_PHONE, phoneString);

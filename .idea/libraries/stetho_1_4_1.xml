@@ -4,8 +4,8 @@
       <root url="jar://$PROJECT_DIR$/seal/build/intermediates/exploded-aar/com.facebook.stetho/stetho/1.4.1/annotations.zip!/" />
     </ANNOTATIONS>
     <CLASSES>
-      <root url="file://$PROJECT_DIR$/seal/build/intermediates/exploded-aar/com.facebook.stetho/stetho/1.4.1/res" />
-      <root url="jar://$PROJECT_DIR$/seal/build/intermediates/exploded-aar/com.facebook.stetho/stetho/1.4.1/jars/classes.jar!/" />
+      <root url="jar://$USER_HOME$/.android/build-cache/a99ebe76ceb1de3462f1596544518b4bc4e4322f/output/jars/classes.jar!/" />
+      <root url="file://$USER_HOME$/.android/build-cache/a99ebe76ceb1de3462f1596544518b4bc4e4322f/output/res" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>

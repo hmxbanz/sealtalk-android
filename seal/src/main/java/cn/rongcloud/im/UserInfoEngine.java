@@ -18,7 +18,6 @@ import io.rong.imlib.model.UserInfo;
  */
 public class UserInfoEngine implements OnDataListener {
 
-
     private static UserInfoEngine instance;
     private UserInfoListener mListener;
     private Context context;

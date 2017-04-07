@@ -58,6 +58,8 @@ public class MainActivity extends FragmentActivity implements
     private TextView mTextChats, mTextContact, mTextFind, mTextMe;
     private DragPointView mUnreadNumView;
     private ImageView mSearchImageView;
+    long firstClick = 0;
+    long secondClick = 0;
     /**
      * 会话列表的fragment
      */
@@ -110,8 +112,6 @@ public class MainActivity extends FragmentActivity implements
             }
         });
     }
-
-
     private void initMainViewPager() {
         Fragment conversationList = initConversationList();
         mViewPager = (ViewPager) findViewById(R.id.main_viewpager);
@@ -140,8 +140,6 @@ public class MainActivity extends FragmentActivity implements
         mViewPager.setOnPageChangeListener(this);
         initData();
     }
-
-
     private Fragment initConversationList() {
         if (mConversationListFragment == null) {
             ConversationListFragment listFragment = new ConversationListFragment();
@@ -188,18 +186,6 @@ public class MainActivity extends FragmentActivity implements
             return mConversationListFragment;
         }
     }
-
-    @Override
-    public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
-
-    }
-
-    @Override
-    public void onPageSelected(int position) {
-        changeTextViewColor();
-        changeSelectedTabState(position);
-    }
-
     private void changeTextViewColor() {
         mImageChats.setBackgroundDrawable(getResources().getDrawable(R.drawable.tab_chat));
         mImageContact.setBackgroundDrawable(getResources().getDrawable(R.drawable.tab_contacts));
@@ -210,7 +196,6 @@ public class MainActivity extends FragmentActivity implements
         mTextFind.setTextColor(Color.parseColor("#abadbb"));
         mTextMe.setTextColor(Color.parseColor("#abadbb"));
     }
-
     private void changeSelectedTabState(int position) {
         switch (position) {
             case 0:
@@ -231,15 +216,100 @@ public class MainActivity extends FragmentActivity implements
                 break;
         }
     }
+    protected void initData() {
 
+        final Conversation.ConversationType[] conversationTypes = {
+                Conversation.ConversationType.PRIVATE,
+                Conversation.ConversationType.GROUP, Conversation.ConversationType.SYSTEM,
+                Conversation.ConversationType.PUBLIC_SERVICE, Conversation.ConversationType.APP_PUBLIC_SERVICE
+        };
+
+        RongIM.getInstance().addUnReadMessageCountChangedObserver(this, conversationTypes);
+        getConversationPush();// 获取 push 的 id 和 target
+        getPushMessage();
+    }
+    private void getConversationPush() {
+        if (getIntent() != null && getIntent().hasExtra("PUSH_CONVERSATIONTYPE") && getIntent().hasExtra("PUSH_TARGETID")) {
+
+            final String conversationType = getIntent().getStringExtra("PUSH_CONVERSATIONTYPE");
+            final String targetId = getIntent().getStringExtra("PUSH_TARGETID");
+
+
+            RongIM.getInstance().getConversation(Conversation.ConversationType.valueOf(conversationType), targetId, new RongIMClient.ResultCallback<Conversation>() {
+                @Override
+                public void onSuccess(Conversation conversation) {
+
+                    if (conversation != null) {
+
+                        if (conversation.getLatestMessage() instanceof ContactNotificationMessage) { //好友消息的push
+                            startActivity(new Intent(MainActivity.this, NewFriendListActivity.class));
+                        } else {
+                            Uri uri = Uri.parse("rong://" + getApplicationInfo().packageName).buildUpon().appendPath("conversation")
+                                    .appendPath(conversationType).appendQueryParameter("targetId", targetId).build();
+                            Intent intent = new Intent(Intent.ACTION_VIEW);
+                            intent.setData(uri);
+                            startActivity(intent);
+                        }
+                    }
+                }
+
+                @Override
+                public void onError(RongIMClient.ErrorCode e) {
+
+                }
+            });
+        }
+    }
+    /**
+     * 得到不落地 push 消息
+     */
+    private void getPushMessage() {
+        Intent intent = getIntent();
+        if (intent != null && intent.getData() != null && intent.getData().getScheme().equals("rong")) {
+            String path = intent.getData().getPath();
+            if (path.contains("push_message")) {
+                SharedPreferences sharedPreferences = getSharedPreferences("config", MODE_PRIVATE);
+                String cacheToken = sharedPreferences.getString("loginToken", "");
+                if (TextUtils.isEmpty(cacheToken)) {
+                    startActivity(new Intent(MainActivity.this, LoginActivity.class));
+                } else {
+                    if (!RongIM.getInstance().getCurrentConnectionStatus().equals(RongIMClient.ConnectionStatusListener.ConnectionStatus.CONNECTED)) {
+                        LoadDialog.show(mContext);
+                        RongIM.connect(cacheToken, new RongIMClient.ConnectCallback() {
+                            @Override
+                            public void onTokenIncorrect() {
+                                LoadDialog.dismiss(mContext);
+                            }
+
+                            @Override
+                            public void onSuccess(String s) {
+                                LoadDialog.dismiss(mContext);
+                            }
+
+                            @Override
+                            public void onError(RongIMClient.ErrorCode e) {
+                                LoadDialog.dismiss(mContext);
+                            }
+                        });
+                    }
+                }
+            }
+        }
+    }
+
+    @Override
+    public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+
+    }
+    @Override
+    public void onPageSelected(int position) {
+        changeTextViewColor();
+        changeSelectedTabState(position);
+    }
     @Override
     public void onPageScrollStateChanged(int state) {
 
     }
-
-
-    long firstClick = 0;
-    long secondClick = 0;
 
     @Override
     public void onClick(View v) {
@@ -290,90 +360,6 @@ public class MainActivity extends FragmentActivity implements
             mViewPager.setCurrentItem(0, false);
         }
     }
-
-    protected void initData() {
-
-        final Conversation.ConversationType[] conversationTypes = {
-                Conversation.ConversationType.PRIVATE,
-                Conversation.ConversationType.GROUP, Conversation.ConversationType.SYSTEM,
-                Conversation.ConversationType.PUBLIC_SERVICE, Conversation.ConversationType.APP_PUBLIC_SERVICE
-        };
-
-        RongIM.getInstance().addUnReadMessageCountChangedObserver(this, conversationTypes);
-        getConversationPush();// 获取 push 的 id 和 target
-        getPushMessage();
-    }
-
-    private void getConversationPush() {
-        if (getIntent() != null && getIntent().hasExtra("PUSH_CONVERSATIONTYPE") && getIntent().hasExtra("PUSH_TARGETID")) {
-
-            final String conversationType = getIntent().getStringExtra("PUSH_CONVERSATIONTYPE");
-            final String targetId = getIntent().getStringExtra("PUSH_TARGETID");
-
-
-            RongIM.getInstance().getConversation(Conversation.ConversationType.valueOf(conversationType), targetId, new RongIMClient.ResultCallback<Conversation>() {
-                @Override
-                public void onSuccess(Conversation conversation) {
-
-                    if (conversation != null) {
-
-                        if (conversation.getLatestMessage() instanceof ContactNotificationMessage) { //好友消息的push
-                            startActivity(new Intent(MainActivity.this, NewFriendListActivity.class));
-                        } else {
-                            Uri uri = Uri.parse("rong://" + getApplicationInfo().packageName).buildUpon().appendPath("conversation")
-                                    .appendPath(conversationType).appendQueryParameter("targetId", targetId).build();
-                            Intent intent = new Intent(Intent.ACTION_VIEW);
-                            intent.setData(uri);
-                            startActivity(intent);
-                        }
-                    }
-                }
-
-                @Override
-                public void onError(RongIMClient.ErrorCode e) {
-
-                }
-            });
-        }
-    }
-
-    /**
-     * 得到不落地 push 消息
-     */
-    private void getPushMessage() {
-        Intent intent = getIntent();
-        if (intent != null && intent.getData() != null && intent.getData().getScheme().equals("rong")) {
-            String path = intent.getData().getPath();
-            if (path.contains("push_message")) {
-                SharedPreferences sharedPreferences = getSharedPreferences("config", MODE_PRIVATE);
-                String cacheToken = sharedPreferences.getString("loginToken", "");
-                if (TextUtils.isEmpty(cacheToken)) {
-                    startActivity(new Intent(MainActivity.this, LoginActivity.class));
-                } else {
-                    if (!RongIM.getInstance().getCurrentConnectionStatus().equals(RongIMClient.ConnectionStatusListener.ConnectionStatus.CONNECTED)) {
-                        LoadDialog.show(mContext);
-                        RongIM.connect(cacheToken, new RongIMClient.ConnectCallback() {
-                            @Override
-                            public void onTokenIncorrect() {
-                                LoadDialog.dismiss(mContext);
-                            }
-
-                            @Override
-                            public void onSuccess(String s) {
-                                LoadDialog.dismiss(mContext);
-                            }
-
-                            @Override
-                            public void onError(RongIMClient.ErrorCode e) {
-                                LoadDialog.dismiss(mContext);
-                            }
-                        });
-                    }
-                }
-            }
-        }
-    }
-
     @Override
     public void onCountChanged(int count) {
         if (count == 0) {
@@ -386,7 +372,6 @@ public class MainActivity extends FragmentActivity implements
             mUnreadNumView.setText(R.string.no_read_message);
         }
     }
-
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         if (keyCode == KeyEvent.KEYCODE_BACK) {
@@ -395,17 +380,6 @@ public class MainActivity extends FragmentActivity implements
         }
         return super.onKeyDown(keyCode, event);
     }
-
-
-    private void hintKbTwo() {
-        InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-        if (imm.isActive() && getCurrentFocus() != null) {
-            if (getCurrentFocus().getWindowToken() != null) {
-                imm.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
-            }
-        }
-    }
-
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         if (null != this.getCurrentFocus()) {
@@ -414,7 +388,6 @@ public class MainActivity extends FragmentActivity implements
         }
         return super.onTouchEvent(event);
     }
-
     @Override
     protected void onDestroy() {
         RongIM.getInstance().removeUnReadMessageCountChangedObserver(this);
@@ -422,7 +395,6 @@ public class MainActivity extends FragmentActivity implements
             this.unregisterReceiver(mHomeKeyReceiver);
         super.onDestroy();
     }
-
     @Override
     public void onDragOut() {
         mUnreadNumView.setVisibility(View.GONE);
@@ -445,8 +417,15 @@ public class MainActivity extends FragmentActivity implements
 
     }
 
+    private void hintKbTwo() {
+        InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+        if (imm.isActive() && getCurrentFocus() != null) {
+            if (getCurrentFocus().getWindowToken() != null) {
+                imm.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
+            }
+        }
+    }
     private HomeWatcherReceiver mHomeKeyReceiver = null;
-
     private void registerHomeKeyReceiver(Context context) {
         if (mHomeKeyReceiver == null) {
             mHomeKeyReceiver = new HomeWatcherReceiver();
